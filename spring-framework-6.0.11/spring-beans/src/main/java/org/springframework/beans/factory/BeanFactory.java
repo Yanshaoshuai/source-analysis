@@ -21,6 +21,8 @@ import org.springframework.core.ResolvableType;
 import org.springframework.lang.Nullable;
 
 /**
+ *
+ * 用于访问Spring bean容器的根接口。Spring 的依赖注入功能是使用此 BeanFactory 接口及其子接口实现的。
  * The root interface for accessing a Spring bean container.
  *
  * <p>This is the basic client view of a bean container;

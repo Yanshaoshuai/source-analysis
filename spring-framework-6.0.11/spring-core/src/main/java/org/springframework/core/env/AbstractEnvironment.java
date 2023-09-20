@@ -134,7 +134,9 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 	 */
 	protected AbstractEnvironment(MutablePropertySources propertySources) {
 		this.propertySources = propertySources;
+		//创建属性解析器
 		this.propertyResolver = createPropertyResolver(propertySources);
+		//自定义属性源(调用子类对象覆盖的方法)
 		customizePropertySources(propertySources);
 	}
 
@@ -442,6 +444,7 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 	@Override
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	public Map<String, Object> getSystemProperties() {
+		//获取JVM属性值
 		return (Map) System.getProperties();
 	}
 
@@ -451,6 +454,7 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 		if (suppressGetenvAccess()) {
 			return Collections.emptyMap();
 		}
+		//获取环境变量
 		return (Map) System.getenv();
 	}
 

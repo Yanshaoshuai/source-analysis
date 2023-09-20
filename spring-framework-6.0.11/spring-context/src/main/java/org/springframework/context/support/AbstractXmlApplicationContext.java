@@ -27,6 +27,10 @@ import org.springframework.core.io.Resource;
 import org.springframework.lang.Nullable;
 
 /**
+ * 一个实现了ApplicationContext的便捷抽象类，通过XmlBeanDefinitionReader来从xml文件中构建bean。
+ * 子类只需实现getConfigResources/getConfigLocations来提供配置文件位置。
+ * 重写getResourceByPath/getResourcePatternResolver可以用来拓展解析配置文件路径的方式。
+ * <p>
  * Convenient base class for {@link org.springframework.context.ApplicationContext}
  * implementations, drawing configuration from XML documents containing bean definitions
  * understood by an {@link org.springframework.beans.factory.xml.XmlBeanDefinitionReader}.
@@ -45,6 +49,9 @@ import org.springframework.lang.Nullable;
  */
 public abstract class AbstractXmlApplicationContext extends AbstractRefreshableConfigApplicationContext {
 
+	/**
+	 * xml格式验证标志
+	 */
 	private boolean validating = true;
 
 

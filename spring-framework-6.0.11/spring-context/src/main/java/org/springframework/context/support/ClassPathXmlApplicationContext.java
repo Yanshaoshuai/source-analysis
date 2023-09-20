@@ -24,6 +24,9 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
+ * 一个简单、一站式的便利应用程序上下文。把传入的路径解释为classs path resource下的路径，包括包路径。
+ * 支持单个具体("/myfiles/context.xml")路径以及ant路径("/myfiles/*-context.xml")
+ * <p>
  * Standalone XML application context, taking the context definition files
  * from the class path, interpreting plain paths as class path resource names
  * that include the package path (e.g. "mypackage/myresource.txt"). Useful for
@@ -138,9 +141,12 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 			String[] configLocations, boolean refresh, @Nullable ApplicationContext parent)
 			throws BeansException {
 
+		//调用父类构造方法(初始化成员属性) 设置父ApplicationContext
 		super(parent);
+		//设置配置文件路径
 		setConfigLocations(configLocations);
 		if (refresh) {
+			//刷新Context
 			refresh();
 		}
 	}

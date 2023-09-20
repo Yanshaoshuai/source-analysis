@@ -66,6 +66,7 @@ public class StandardEnvironment extends AbstractEnvironment {
 	 * {@link MutablePropertySources} instance.
 	 */
 	public StandardEnvironment() {
+		//会调用父类无参构造
 	}
 
 	/**

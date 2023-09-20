@@ -71,12 +71,14 @@ public class PropertySourcesPropertyResolver extends AbstractPropertyResolver {
 	@Override
 	@Nullable
 	protected String getPropertyAsRawString(String key) {
+		//获取属性值
 		return getProperty(key, String.class, false);
 	}
 
 	@Nullable
 	protected <T> T getProperty(String key, Class<T> targetValueType, boolean resolveNestedPlaceholders) {
 		if (this.propertySources != null) {
+			//从propertySources获取属性值
 			for (PropertySource<?> propertySource : this.propertySources) {
 				if (logger.isTraceEnabled()) {
 					logger.trace("Searching for key '" + key + "' in PropertySource '" +

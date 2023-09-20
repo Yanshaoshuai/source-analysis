@@ -19,6 +19,14 @@ package org.springframework.beans.factory.config;
 import org.springframework.beans.BeansException;
 
 /**
+ * 可以自定义修改application context 中的bean definition ,调整context底层bean工厂中bean中的属性。
+ * 只能修改bean definition，不能修改bean实例。
+ * ApplicationContext可以自动检测它bean容器中的BeanFactoryPostProcessor,
+ * 也可以ConfigurableApplicationContext以通过编程的方式注册到容器中。
+ * 自动检测的BeanFactoryPostProcessor应用的顺序通过@PriorityOrdered/@Ordered指定，
+ * 顺序注解对编程方式注册的BeanFactoryPostProcessor不生效，
+ * 编程方式注册的BeanFactoryPostProcessor按照注册顺序排序。
+ * <p>
  * Factory hook that allows for custom modification of an application context's
  * bean definitions, adapting the bean property values of the context's underlying
  * bean factory.
