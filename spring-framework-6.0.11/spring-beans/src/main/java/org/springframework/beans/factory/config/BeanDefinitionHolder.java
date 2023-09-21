@@ -24,6 +24,7 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 /**
+ * BeanDefinition的包装类
  * Holder for a BeanDefinition with name and aliases.
  * Can be registered as a placeholder for an inner bean.
  *

@@ -176,6 +176,7 @@ public class PluggableSchemaResolver implements EntityResolver {
 
 	@Override
 	public String toString() {
+		//idea调试会自动调用toString 所以会schemaMappings会有值
 		return "EntityResolver using schema mappings " + getSchemaMappings();
 	}
 

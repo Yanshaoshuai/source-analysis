@@ -1009,9 +1009,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			}
 		}
 
+		//是否已经包含beanName对应的BeanDefinition
 		BeanDefinition existingDefinition = this.beanDefinitionMap.get(beanName);
 		if (existingDefinition != null) {
-			if (!isAllowBeanDefinitionOverriding()) {
+			if (!isAllowBeanDefinitionOverriding()) {//是否允许BeanDefinition覆盖
 				throw new BeanDefinitionOverrideException(beanName, beanDefinition, existingDefinition);
 			}
 			else if (existingDefinition.getRole() < beanDefinition.getRole()) {
@@ -1036,6 +1037,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 							"] with [" + beanDefinition + "]");
 				}
 			}
+			//把BeanDefinition添加到map中
 			this.beanDefinitionMap.put(beanName, beanDefinition);
 		}
 		else {
@@ -1068,8 +1070,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				}
 			}
 			else {
+				//把BeanDefinition添加到map中
 				// Still in startup registration phase
 				this.beanDefinitionMap.put(beanName, beanDefinition);
+				//把beanName添加到beanDefinitionNames
 				this.beanDefinitionNames.add(beanName);
 				removeManualSingletonName(beanName);
 			}

@@ -579,10 +579,14 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		//加上一个对象锁
 		synchronized (this.startupShutdownMonitor) {
 			StartupStep contextRefresh = this.applicationStartup.start("spring.context.refresh");
+			//在容器刷新前做一些准备工作
+			//1，设置容器启动时间 2.设置活跃状态为true 3.设置关闭状态为false
+			//4.获取Environment对象，并加载系统属性到Environment中
+			//5.创建监听器和事件的集合
 			// Prepare this context for refreshing.
 			prepareRefresh();
 
-			//获取新的BeanFactory
+			//获取新的BeanFactory(DefaultListableBeanFactory) 加载BeanDefinition
 			// Tell the subclass to refresh the internal bean factory.
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
@@ -671,8 +675,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		// Initialize any placeholder property sources in the context environment.
 		initPropertySources();
 
+		//验证必须的属性值是否都存在
 		// Validate that all properties marked as required are resolvable:
-		// see ConfigurablePropertyResolver#setRequiredProperties
+		// @see ConfigurablePropertyResolver#setRequiredProperties
 		getEnvironment().validateRequiredProperties();
 
 		// Store pre-refresh ApplicationListeners...
@@ -1443,6 +1448,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 	@Override
 	public Resource[] getResources(String locationPattern) throws IOException {
+		//把路径解析为Resource对象
 		return this.resourcePatternResolver.getResources(locationPattern);
 	}
 
