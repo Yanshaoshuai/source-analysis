@@ -33,6 +33,11 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.ReflectionUtils;
 
 /**
+ * SpringServletContainerInitializer通过@HandlesTypes(WebApplicationInitializer.class)标记
+ * 它能处理的类型，并且在services jakarta.servlet.ServletContainerInitializer中注册自己为SPI实现
+ * 在容器启动时便会调用onStartup方法把所有WebApplicationInitializer实现类注入onStartup参数
+ * onStartup方法中循环调用实现类的onStartup方法从而完成DispatcherServlet的配置和创建
+ * <p>
  * A Spring-provided {@link ServletContainerInitializer} designed to support code-based
  * configuration of the servlet container using Spring's {@link WebApplicationInitializer}
  * SPI as opposed to (or possibly in combination with) the traditional

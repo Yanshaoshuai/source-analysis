@@ -19,6 +19,7 @@ package org.springframework.transaction.annotation;
 import org.springframework.transaction.TransactionDefinition;
 
 /**
+ * 事务传播特性枚举
  * Enumeration that represents transaction propagation behaviors for use
  * with the {@link Transactional} annotation, corresponding to the
  * {@link TransactionDefinition} interface.
@@ -30,6 +31,7 @@ import org.springframework.transaction.TransactionDefinition;
 public enum Propagation {
 
 	/**
+	 * 支持当前事务(如果存在当前事务使用当前事务)，如果不存在，则创建一个新事务
 	 * Support a current transaction, create a new one if none exists.
 	 * Analogous to EJB transaction attribute of the same name.
 	 * <p>This is the default setting of a transaction annotation.
@@ -86,6 +88,7 @@ public enum Propagation {
 	NEVER(TransactionDefinition.PROPAGATION_NEVER),
 
 	/**
+	 * 如果存在当前事务，则在嵌套事务中执行，否则行为类似于 REQUIRED
 	 * Execute within a nested transaction if a current transaction exists,
 	 * behave like {@code REQUIRED} otherwise. There is no analogous feature in EJB.
 	 * <p>Note: Actual creation of a nested transaction will only work on specific

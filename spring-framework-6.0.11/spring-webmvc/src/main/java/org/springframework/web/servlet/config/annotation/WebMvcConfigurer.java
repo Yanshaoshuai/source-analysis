@@ -71,6 +71,9 @@ public interface WebMvcConfigurer {
 	}
 
 	/**
+	 * 配置处理程序以通过转发到 Servlet 容器的“默认”servlet 来委派未处理的请求。
+	 * 一个常见的用例是当 DispatcherServlet 映射到 “” 时，从而覆盖 Servlet 容器对静态资源的默认处理
+	 * <p>
 	 * Configure a handler to delegate unhandled requests by forwarding to the
 	 * Servlet container's "default" servlet. A common use case for this is when
 	 * the {@link DispatcherServlet} is mapped to "/" thus overriding the

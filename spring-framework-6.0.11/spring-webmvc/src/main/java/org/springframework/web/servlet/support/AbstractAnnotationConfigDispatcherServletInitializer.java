@@ -22,6 +22,8 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 
 /**
+ *
+ * 使用java Spring 配置的方式注册一个DispatcherServlet
  * {@link org.springframework.web.WebApplicationInitializer WebApplicationInitializer}
  * to register a {@code DispatcherServlet} and use Java-based Spring configuration.
  *

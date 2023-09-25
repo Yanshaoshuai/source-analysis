@@ -20,6 +20,10 @@ ApplicationContext可以自动检测它bean容器中的BeanFactoryPostProcessor,
 
 作用: 一个标记超接口，表示 Bean 有资格被Spring 容器的特定框架对象通过回调方法通知。实际的方法签名由各个子接口确定，但通常应仅包含一个接受单个参数的 void 返回方法
 
+#### BeanPostProcessor
+
+#### InitializingBean
+
 
 
 #### ClassPathXmlApplicationContext
