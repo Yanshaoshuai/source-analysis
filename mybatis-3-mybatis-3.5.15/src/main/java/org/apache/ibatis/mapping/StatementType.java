@@ -24,6 +24,6 @@ public enum StatementType {
 
   PREPARED,
 
-  CALLABLE
+  CALLABLE//存储过程
 
 }

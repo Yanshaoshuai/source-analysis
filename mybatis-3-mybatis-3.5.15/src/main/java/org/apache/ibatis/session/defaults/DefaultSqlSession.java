@@ -50,7 +50,7 @@ public class DefaultSqlSession implements SqlSession {
   private final Executor executor;
 
   private final boolean autoCommit;
-  private boolean dirty;
+  private boolean dirty;//true 表示事务还未提交
   private List<Cursor<?>> cursorList;
 
   public DefaultSqlSession(Configuration configuration, Executor executor, boolean autoCommit) {

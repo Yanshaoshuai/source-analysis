@@ -84,7 +84,7 @@ public class ReuseExecutor extends BaseExecutor {
     Statement stmt;
     BoundSql boundSql = handler.getBoundSql();
     String sql = boundSql.getSql();
-    if (hasStatementFor(sql)) {
+    if (hasStatementFor(sql)) {//复用Statement
       stmt = getStatement(sql);
       applyTransactionTimeout(stmt);
     } else {

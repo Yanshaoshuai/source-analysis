@@ -55,7 +55,7 @@ public abstract class BaseExecutor implements Executor {
   protected Executor wrapper;
 
   protected ConcurrentLinkedQueue<DeferredLoad> deferredLoads;
-  protected PerpetualCache localCache;
+  protected PerpetualCache localCache;//一级缓存
   protected PerpetualCache localOutputParameterCache;
   protected Configuration configuration;
 
@@ -152,9 +152,9 @@ public abstract class BaseExecutor implements Executor {
     try {
       queryStack++;
       list = resultHandler == null ? (List<E>) localCache.getObject(key) : null;
-      if (list != null) {
+      if (list != null) {//resultHandler为null从缓存中获取
         handleLocallyCachedOutputParameters(ms, key, parameter, boundSql);
-      } else {
+      } else {//查询数据库
         list = queryFromDatabase(ms, parameter, rowBounds, resultHandler, key, boundSql);
       }
     } finally {
