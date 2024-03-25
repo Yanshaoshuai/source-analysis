@@ -51,7 +51,8 @@ public class HikariDataSource extends HikariConfig implements DataSource, Closea
     * this constructor vs. {@link #HikariDataSource(HikariConfig)} will
     * result in {@link #getConnection()} performance that is slightly lower
     * due to lazy initialization checks.
-    *
+    * 延迟初始化 第一次调用getConnection()方法时启动连接池
+    * 启动后除了HikariConfigMXBean接口的方法之外不允许再次修改配置
     * The first call to {@link #getConnection()} starts the pool.  Once the pool
     * is started, the configuration is "sealed" and no further configuration
     * changes are possible -- except via {@link HikariConfigMXBean} methods.
@@ -73,11 +74,11 @@ public class HikariDataSource extends HikariConfig implements DataSource, Closea
     */
    public HikariDataSource(HikariConfig configuration)
    {
-      configuration.validate();
-      configuration.copyStateTo(this);
+      configuration.validate();//校验配置是否合法
+      configuration.copyStateTo(this);//拷贝配置到当前实例
 
       LOGGER.info("{} - Starting...", configuration.getPoolName());
-      pool = fastPathPool = new HikariPool(this);
+      pool = fastPathPool = new HikariPool(this);//初始化连接池
       LOGGER.info("{} - Start completed.", configuration.getPoolName());
 
       this.seal();

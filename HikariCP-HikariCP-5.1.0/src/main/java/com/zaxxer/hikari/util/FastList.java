@@ -40,8 +40,11 @@ public final class FastList<T> implements List<T>, RandomAccess, Serializable
 {
    private static final long serialVersionUID = -4598088075242913858L;
 
+   //元素Class
    private final Class<?> clazz;
+   //元素数组
    private T[] elementData;
+   //元素大小
    private int size;
 
    /**
@@ -51,6 +54,7 @@ public final class FastList<T> implements List<T>, RandomAccess, Serializable
    @SuppressWarnings("unchecked")
    public FastList(Class<?> clazz)
    {
+      //创建数组
       this.elementData = (T[]) Array.newInstance(clazz, 32);
       this.clazz = clazz;
    }
@@ -78,10 +82,10 @@ public final class FastList<T> implements List<T>, RandomAccess, Serializable
       if (size < elementData.length) {
          elementData[size++] = element;
       }
-      else {
+      else {//扩容 相比ArrayList少了很多边界检测
          // overflow-conscious code
          final var oldCapacity = elementData.length;
-         final var newCapacity = oldCapacity << 1;
+         final var newCapacity = oldCapacity << 1;//2倍扩容
          @SuppressWarnings("unchecked")
          final var newElementData = (T[]) Array.newInstance(clazz, newCapacity);
          System.arraycopy(elementData, 0, newElementData, 0, oldCapacity);
@@ -123,15 +127,17 @@ public final class FastList<T> implements List<T>, RandomAccess, Serializable
     * is the last element.  Equality is identity based, not equals() based.
     * Only the first matching element is removed.
     *
+    *  当被删除的元素是最后一个元素时这种删除方式最有效
+    *  相等性基于地址而不是基于equals
     * @param element the element to remove
     */
    @Override
    public boolean remove(Object element)
    {
-      for (var index = size - 1; index >= 0; index--) {
+      for (var index = size - 1; index >= 0; index--) {//从后往前遍历
          if (element == elementData[index]) {
             final var numMoved = size - index - 1;
-            if (numMoved > 0) {
+            if (numMoved > 0) {//是否需要移动数组
                System.arraycopy(elementData, index + 1, elementData, index, numMoved);
             }
             elementData[--size] = null;

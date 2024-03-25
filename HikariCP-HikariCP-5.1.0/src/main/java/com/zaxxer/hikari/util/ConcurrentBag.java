@@ -59,22 +59,29 @@ import static java.util.concurrent.locks.LockSupport.parkNanos;
 public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseable
 {
    private static final Logger LOGGER = LoggerFactory.getLogger(ConcurrentBag.class);
-
+   //保存容器内所有元素
    private final CopyOnWriteArrayList<T> sharedList;
+   //threadList是否使用WeakReference保存
    private final boolean weakThreadLocals;
-
+   //当前线程持有的元素
    private final ThreadLocal<List<Object>> threadList;
    private final IBagStateListener listener;
+   //等待获取元素的线程数量
    private final AtomicInteger waiters;
+   //是否已关闭
    private volatile boolean closed;
 
    private final SynchronousQueue<T> handoffQueue;
 
    public interface IConcurrentBagEntry
    {
+      //当前未被使用
       int STATE_NOT_IN_USE = 0;
+      //被使用中
       int STATE_IN_USE = 1;
+      //被移除
       int STATE_REMOVED = -1;
+      //被保留
       int STATE_RESERVED = -2;
 
       boolean compareAndSet(int expectState, int newState);
@@ -100,7 +107,7 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
       this.handoffQueue = new SynchronousQueue<>(true);
       this.waiters = new AtomicInteger();
       this.sharedList = new CopyOnWriteArrayList<>();
-      if (weakThreadLocals) {
+      if (weakThreadLocals) {//
          this.threadList = ThreadLocal.withInitial(() -> new ArrayList<>(16));
       }
       else {
@@ -111,7 +118,7 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
    /**
     * The method will borrow a BagEntry from the bag, blocking for the
     * specified timeout if none are available.
-    *
+    * 从bag中借出元素，如果没有可以获取的元素，会阻塞指定时长
     * @param timeout how long to wait before giving up, in units of unit
     * @param timeUnit a <code>TimeUnit</code> determining how to interpret the timeout parameter
     * @return a borrowed instance from the bag or null if a timeout occurs
@@ -119,9 +126,10 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
     */
    public T borrow(long timeout, final TimeUnit timeUnit) throws InterruptedException
    {
+      //获取当前线程元素列表
       // Try the thread-local list first
       final var list = threadList.get();
-      for (int i = list.size() - 1; i >= 0; i--) {
+      for (int i = list.size() - 1; i >= 0; i--) {//如果有未被使用的元素 返回最后一个未被使用的元素 并设置未使用中
          final var entry = list.remove(i);
          @SuppressWarnings("unchecked")
          final T bagEntry = weakThreadLocals ? ((WeakReference<T>) entry).get() : (T) entry;
@@ -131,24 +139,25 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
       }
 
       // Otherwise, scan the shared list ... then poll the handoff queue
-      final int waiting = waiters.incrementAndGet();
+      final int waiting = waiters.incrementAndGet();//等待者+1
       try {
-         for (T bagEntry : sharedList) {
+         for (T bagEntry : sharedList) {//如果从共享链表中找到一个未使用的元素并且成功修改状态为使用中 则返回
             if (bagEntry.compareAndSet(STATE_NOT_IN_USE, STATE_IN_USE)) {
                // If we may have stolen another waiter's connection, request another bag add.
-               if (waiting > 1) {
+               if (waiting > 1) {//如果有其它等待者 则通知外部添加元素
                   listener.addBagItem(waiting - 1);
                }
                return bagEntry;
             }
          }
 
+         //通知外部添加元素
          listener.addBagItem(waiting);
 
          timeout = timeUnit.toNanos(timeout);
          do {
             final var start = currentTime();
-            final T bagEntry = handoffQueue.poll(timeout, NANOSECONDS);
+            final T bagEntry = handoffQueue.poll(timeout, NANOSECONDS);//从交接队列取元素
             if (bagEntry == null || bagEntry.compareAndSet(STATE_NOT_IN_USE, STATE_IN_USE)) {
                return bagEntry;
             }
@@ -167,20 +176,20 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
     * This method will return a borrowed object to the bag.  Objects
     * that are borrowed from the bag but never "requited" will result
     * in a memory leak.
-    *
+    * 归还从bag借出的元素。如果借出的元素不做归还操作，会导致内存泄露。
     * @param bagEntry the value to return to the bag
     * @throws NullPointerException if value is null
     * @throws IllegalStateException if the bagEntry was not borrowed from the bag
     */
    public void requite(final T bagEntry)
    {
-      bagEntry.setState(STATE_NOT_IN_USE);
+      bagEntry.setState(STATE_NOT_IN_USE);//设置状态为未使用
 
-      for (var i = 0; waiters.get() > 0; i++) {
-         if (bagEntry.getState() != STATE_NOT_IN_USE || handoffQueue.offer(bagEntry)) {
+      for (var i = 0; waiters.get() > 0; i++) {//只要有等待者且没有返回就一直循环
+         if (bagEntry.getState() != STATE_NOT_IN_USE || handoffQueue.offer(bagEntry)) {//元素状态被修改或者往队列放入元素成功则返回
             return;
          }
-         else if ((i & 0xff) == 0xff) {
+         else if ((i & 0xff) == 0xff) {// 如果循环了255次，把当前线程挂起一会
             parkNanos(MICROSECONDS.toNanos(10));
          }
          else {
@@ -189,7 +198,7 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
       }
 
       final var threadLocalList = threadList.get();
-      if (threadLocalList.size() < 50) {
+      if (threadLocalList.size() < 50) {//没有等待者了 把元素放入当前线程列表中
          threadLocalList.add(weakThreadLocals ? new WeakReference<>(bagEntry) : bagEntry);
       }
    }
@@ -201,13 +210,14 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
     */
    public void add(final T bagEntry)
    {
-      if (closed) {
+      if (closed) {//已经关闭 不允许添加
          LOGGER.info("ConcurrentBag has been closed, ignoring add()");
          throw new IllegalStateException("ConcurrentBag has been closed, ignoring add()");
       }
 
       sharedList.add(bagEntry);
 
+      //自旋尝试将bagEntry放入交接队列
       // spin until a thread takes it or none are waiting
       while (waiters.get() > 0 && bagEntry.getState() == STATE_NOT_IN_USE && !handoffQueue.offer(bagEntry)) {
          Thread.yield();
@@ -217,7 +227,7 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
    /**
     * Remove a value from the bag.  This method should only be called
     * with objects obtained by <code>borrow(long, TimeUnit)</code> or <code>reserve(T)</code>
-    *
+    * 只用于移除通过 borrow(long, TimeUnit) 或 reserve(T) 方法获得的对象
     * @param bagEntry the value to remove
     * @return true if the entry was removed, false otherwise
     * @throws IllegalStateException if an attempt is made to remove an object
@@ -225,16 +235,18 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
     */
    public boolean remove(final T bagEntry)
    {
+      //只能用于移除通过 borrow(long, TimeUnit) 或 reserve(T) 方法获得的对象
       if (!bagEntry.compareAndSet(STATE_IN_USE, STATE_REMOVED) && !bagEntry.compareAndSet(STATE_RESERVED, STATE_REMOVED) && !closed) {
          LOGGER.warn("Attempt to remove an object from the bag that was not borrowed or reserved: {}", bagEntry);
          return false;
       }
 
+      //从共享列表移除
       final boolean removed = sharedList.remove(bagEntry);
       if (!removed && !closed) {
          LOGGER.warn("Attempt to remove an object from the bag that does not exist: {}", bagEntry);
       }
-
+      //从当前线程列表移除
       threadList.get().remove(bagEntry);
 
       return removed;
@@ -292,20 +304,20 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
     * @return true if the item was able to be reserved, false otherwise
     */
    public boolean reserve(final T bagEntry)
-   {
+   {  //设置为被保留状态
       return bagEntry.compareAndSet(STATE_NOT_IN_USE, STATE_RESERVED);
    }
 
    /**
     * This method is used to make an item reserved via <code>reserve(T)</code>
     * available again for borrowing.
-    *
+    * 让被保留的元素重新可用
     * @param bagEntry the item to unreserve
     */
    @SuppressWarnings("SpellCheckingInspection")
    public void unreserve(final T bagEntry)
    {
-      if (bagEntry.compareAndSet(STATE_RESERVED, STATE_NOT_IN_USE)) {
+      if (bagEntry.compareAndSet(STATE_RESERVED, STATE_NOT_IN_USE)) {//设置为未被使用状态
          // spin until a thread takes it or none are waiting
          while (waiters.get() > 0 && !handoffQueue.offer(bagEntry)) {
             Thread.yield();

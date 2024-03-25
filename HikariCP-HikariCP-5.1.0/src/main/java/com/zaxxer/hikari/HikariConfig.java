@@ -48,33 +48,49 @@ public class HikariConfig implements HikariConfigMXBean
    private static final Logger LOGGER = LoggerFactory.getLogger(HikariConfig.class);
 
    private static final char[] ID_CHARACTERS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
+   //默认连接超时时间 30s
    private static final long CONNECTION_TIMEOUT = SECONDS.toMillis(30);
+   //默认校验连接超时时间 5s
    private static final long VALIDATION_TIMEOUT = SECONDS.toMillis(5);
    private static final long SOFT_TIMEOUT_FLOOR = Long.getLong("com.zaxxer.hikari.timeoutMs.floor", 250L);
+   //默认连接空闲时间 10分钟
    private static final long IDLE_TIMEOUT = MINUTES.toMillis(10);
+   //默认连接最大存活时间 30分钟
    private static final long MAX_LIFETIME = MINUTES.toMillis(30);
    private static final long DEFAULT_KEEPALIVE_TIME = 0L;
+   //默认连接池大小 10
    private static final int DEFAULT_POOL_SIZE = 10;
 
    private static boolean unitTest = false;
 
    // Properties changeable at runtime through the HikariConfigMXBean
    //
+   //以下是运行时可以更改的配置
    private volatile String catalog;
+   //连接超时时间
    private volatile long connectionTimeout;
+   //验证超时时间
    private volatile long validationTimeout;
+   //连接空闲时间
    private volatile long idleTimeout;
    private volatile long leakDetectionThreshold;
+   //连接最大存活时间
    private volatile long maxLifetime;
+   //连接池最大大小
    private volatile int maxPoolSize;
+   //最小连接数
    private volatile int minIdle;
    private volatile String username;
    private volatile String password;
 
    // Properties NOT changeable at runtime
    //
+   //以下是运行时不可更改的配置
+
    private long initializationFailTimeout;
+   //创建连接后 放入连接池前执行的sql
    private String connectionInitSql;
+   //校验连接是否可用的sql 如果为空则使用ping
    private String connectionTestQuery;
    private String dataSourceClassName;
    private String dataSourceJndiName;
@@ -84,10 +100,14 @@ public class HikariConfig implements HikariConfigMXBean
    private String poolName;
    private String schema;
    private String transactionIsolationName;
+   //是否自动提交
    private boolean isAutoCommit;
+   //是否只读
    private boolean isReadOnly;
    private boolean isIsolateInternalQueries;
+   //是否注册MBean 用于运行时修改配置
    private boolean isRegisterMbeans;
+   //是否允许挂起连接池
    private boolean isAllowPoolSuspension;
    private DataSource dataSource;
    private Properties dataSourceProperties;
@@ -126,6 +146,7 @@ public class HikariConfig implements HikariConfigMXBean
       isAutoCommit = true;
       keepaliveTime = DEFAULT_KEEPALIVE_TIME;
 
+      //加载外部配置
       var systemProp = System.getProperty("hikaricp.configurationFile");
       if (systemProp != null) {
          loadProperties(systemProp);
@@ -985,13 +1006,14 @@ public class HikariConfig implements HikariConfigMXBean
    @SuppressWarnings("StatementWithEmptyBody")
    public void validate()
    {
-      if (poolName == null) {
+      if (poolName == null) {//未设置连接池名称 自动生成
          poolName = generatePoolName();
       }
-      else if (isRegisterMbeans && poolName.contains(":")) {
+      else if (isRegisterMbeans && poolName.contains(":")) {//当使用JMX时不能含有':'
          throw new IllegalArgumentException("poolName cannot contain ':' when used with JMX");
       }
 
+      //空字符串设置为null
       // treat empty property as null
       //noinspection NonAtomicOperationOnVolatileField
       catalog = getNullIfEmpty(catalog);
@@ -1039,8 +1061,12 @@ public class HikariConfig implements HikariConfigMXBean
       }
    }
 
+   /**
+    * 校验一些数字范围 当不符合规定时设置为默认值
+    */
    private void validateNumerics()
    {
+      //如果最大存活时间小于30秒 设置为三十分钟
       if (maxLifetime != 0 && maxLifetime < SECONDS.toMillis(30)) {
          LOGGER.warn("{} - maxLifetime is less than 30000ms, setting to default {}ms.", poolName, MAX_LIFETIME);
          maxLifetime = MAX_LIFETIME;
@@ -1075,10 +1101,12 @@ public class HikariConfig implements HikariConfigMXBean
          validationTimeout = VALIDATION_TIMEOUT;
       }
 
+      //连接池最大大小小于1设置为10
       if (maxPoolSize < 1) {
          maxPoolSize = DEFAULT_POOL_SIZE;
       }
 
+      //最小连接数不合规 设置为maxPoolSize
       if (minIdle < 0 || minIdle > maxPoolSize) {
          minIdle = maxPoolSize;
       }

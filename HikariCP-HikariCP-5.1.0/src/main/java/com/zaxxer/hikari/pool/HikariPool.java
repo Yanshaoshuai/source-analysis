@@ -70,6 +70,7 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
 
    private final PoolEntryCreator poolEntryCreator = new PoolEntryCreator();
    private final PoolEntryCreator postFillPoolEntryCreator = new PoolEntryCreator("After adding ");
+   //添加连接的线程池
    private final ThreadPoolExecutor addConnectionExecutor;
    private final ThreadPoolExecutor closeConnectionExecutor;
 
@@ -78,6 +79,7 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
    private final ProxyLeakTaskFactory leakTaskFactory;
    private final SuspendResumeLock suspendResumeLock;
 
+   //执行HouseKeeper任务的线程池，HouseKeeper用于维持最小连接数
    private final ScheduledExecutorService houseKeepingExecutorService;
    private ScheduledFuture<?> houseKeeperTask;
 
@@ -88,13 +90,15 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
     */
    public HikariPool(final HikariConfig config)
    {
-      super(config);
+      super(config);//父类PoolBase构造
 
-      this.connectionBag = new ConcurrentBag<>(this);
+      this.connectionBag = new ConcurrentBag<>(this);//创建存储连接的集合
+      //支持挂起 SuspendResumeLock(true) 否则  SuspendResumeLock.FAUX_LOCK
       this.suspendResumeLock = config.isAllowPoolSuspension() ? new SuspendResumeLock() : SuspendResumeLock.FAUX_LOCK;
 
       this.houseKeepingExecutorService = initializeHouseKeepingExecutorService();
 
+      //校验 快速失败
       checkFailFast();
 
       if (config.getMetricsTrackerFactory() != null) {
@@ -111,23 +115,32 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
       ThreadFactory threadFactory = config.getThreadFactory();
 
       final int maxPoolSize = config.getMaximumPoolSize();
+      //创建用于创建添加连接线程池的阻塞队列
       LinkedBlockingQueue<Runnable> addConnectionQueue = new LinkedBlockingQueue<>(maxPoolSize);
+      //创建用于添加连接的线程池
       this.addConnectionExecutor = createThreadPoolExecutor(addConnectionQueue, poolName + " connection adder", threadFactory, new CustomDiscardPolicy());
+      //创建用于关闭连接的线程池
       this.closeConnectionExecutor = createThreadPoolExecutor(maxPoolSize, poolName + " connection closer", threadFactory, new ThreadPoolExecutor.CallerRunsPolicy());
 
+      //创建用于生成检测泄漏的Task的工厂
       this.leakTaskFactory = new ProxyLeakTaskFactory(config.getLeakDetectionThreshold(), houseKeepingExecutorService);
 
+      //开启HouseKeeper定时任务 30s执行一次
       this.houseKeeperTask = houseKeepingExecutorService.scheduleWithFixedDelay(new HouseKeeper(), 100L, housekeepingPeriodMs, MILLISECONDS);
 
+      //如果配置了com.zaxxer.hikari.blockUntilFilled为true并且初始化失败超时时间大于1
       if (Boolean.getBoolean("com.zaxxer.hikari.blockUntilFilled") && config.getInitializationFailTimeout() > 1) {
+         //加速处理
          addConnectionExecutor.setMaximumPoolSize(Math.min(16, Runtime.getRuntime().availableProcessors()));
          addConnectionExecutor.setCorePoolSize(Math.min(16, Runtime.getRuntime().availableProcessors()));
 
          final long startTime = currentTime();
+         //等待直到连接池中连接数达到最小连接数 或者初始化超时
          while (elapsedMillis(startTime) < config.getInitializationFailTimeout() && getTotalConnections() < config.getMinimumIdle()) {
             quietlySleep(MILLISECONDS.toMillis(100));
          }
 
+         //恢复到单线程
          addConnectionExecutor.setCorePoolSize(1);
          addConnectionExecutor.setMaximumPoolSize(1);
       }
@@ -481,7 +494,7 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
       catch (ConnectionSetupException e) {
          if (poolState == POOL_NORMAL) { // we check POOL_NORMAL to avoid a flood of messages if shutdown() is running concurrently
             logger.error("{} - Error thrown while acquiring connection from data source", poolName, e.getCause());
-            lastConnectionFailure.set(e);
+            lastConnectionFailure.set(e);//设置异常
          }
       }
       catch (Exception e) {
@@ -503,7 +516,7 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
 
       if (shouldAdd) {
          final var countToAdd = config.getMinimumIdle() - idle;
-         for (int i = 0; i < countToAdd; i++)
+         for (int i = 0; i < countToAdd; i++)//向添加连接线程池提交添加连接任务
             addConnectionExecutor.submit(isAfterAdd ? postFillPoolEntryCreator : poolEntryCreator);
       }
       else if (isAfterAdd) {
@@ -547,27 +560,28 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
 
       final var startTime = currentTime();
       do {
+         //创建一个数据库连接池Entry
          final var poolEntry = createPoolEntry();
          if (poolEntry != null) {
             if (config.getMinimumIdle() > 0) {
-               connectionBag.add(poolEntry);
+               connectionBag.add(poolEntry);//加入到连接池元素容器中
                logger.info("{} - Added connection {}", poolName, poolEntry.connection);
             }
             else {
                quietlyCloseConnection(poolEntry.close(), "(initialization check complete and minimumIdle is zero)");
             }
-
+            //创建连接并添加到容器成功则返回
             return;
          }
 
-         if (getLastConnectionFailure() instanceof ConnectionSetupException) {
+         if (getLastConnectionFailure() instanceof ConnectionSetupException) {//如果是ConnectionSetupException 抛出异常
             throwPoolInitializationException(getLastConnectionFailure().getCause());
          }
 
          quietlySleep(SECONDS.toMillis(1));
-      } while (elapsedMillis(startTime) < initializationTimeout);
+      } while (elapsedMillis(startTime) < initializationTimeout);//超时 结束循环
 
-      if (initializationTimeout > 0) {
+      if (initializationTimeout > 0) {//超时未创建成功 抛出异常
          throwPoolInitializationException(getLastConnectionFailure());
       }
    }
@@ -624,7 +638,7 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
          executor.setRemoveOnCancelPolicy(true);
          return executor;
       }
-      else {
+      else {//优先使用配置里的线程池
          return config.getScheduledExecutor();
       }
    }
@@ -699,6 +713,7 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
 
    /**
     * Creating and adding poolEntries (connections) to the pool.
+    * 创建并且添加poolEntries (connections)到连接池中
     */
    private final class PoolEntryCreator implements Callable<Boolean>
    {
@@ -813,7 +828,7 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
             }
             else
                logPoolState("Pool ");
-
+            //填充连接
             fillPool(true); // Try to maintain minimum connections
          }
          catch (Exception e) {

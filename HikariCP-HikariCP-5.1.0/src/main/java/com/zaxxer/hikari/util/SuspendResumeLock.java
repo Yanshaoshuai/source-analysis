@@ -43,7 +43,10 @@ public class SuspendResumeLock
       public void resume() {}
    };
 
+   //最大许可
    private static final int MAX_PERMITS = 10000;
+
+   //信号量
    private final Semaphore acquisitionSemaphore;
 
    /**
@@ -61,23 +64,25 @@ public class SuspendResumeLock
 
    public void acquire() throws SQLException
    {
-      if (acquisitionSemaphore.tryAcquire()) {
+      if (acquisitionSemaphore.tryAcquire()) {//尝试获取信号量
          return;
       }
       else if (Boolean.getBoolean("com.zaxxer.hikari.throwIfSuspended")) {
          throw new SQLTransientException("The pool is currently suspended and configured to throw exceptions upon acquisition");
       }
-
+      //阻塞直到获取
       acquisitionSemaphore.acquireUninterruptibly();
    }
 
    public void release()
    {
+      //释放信号量
       acquisitionSemaphore.release();
    }
 
    public void suspend()
    {
+      //尝试获取最大信号量 再有等待者就会被挂起
       acquisitionSemaphore.acquireUninterruptibly(MAX_PERMITS);
    }
 

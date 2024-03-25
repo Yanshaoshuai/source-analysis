@@ -102,6 +102,7 @@ abstract class PoolBase
 
       this.isQueryTimeoutSupported = UNINITIALIZED;
       this.isNetworkTimeoutSupported = UNINITIALIZED;
+      //如果connectionTestQuery为空 使用ping检测与数据库的联通性
       this.isUseJdbc4Validation = config.getConnectionTestQuery() == null;
       this.isIsolateInternalQueries = config.isIsolateInternalQueries();
 
@@ -307,6 +308,8 @@ abstract class PoolBase
 
    /**
     * Create/initialize the underlying DataSource.
+    *
+    * 创建初始化底层数据源
     */
    private void initializeDataSource()
    {
