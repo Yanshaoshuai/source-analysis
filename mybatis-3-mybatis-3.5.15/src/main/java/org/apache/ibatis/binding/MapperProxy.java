@@ -80,9 +80,10 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     try {
-      if (Object.class.equals(method.getDeclaringClass())) {
+      if (Object.class.equals(method.getDeclaringClass())) {//如果是Object的方法，直接调用
         return method.invoke(this, args);
       }
+      //是Mapper接口的方法，调用cachedInvoker
       return cachedInvoker(method).invoke(proxy, method, args, sqlSession);
     } catch (Throwable t) {
       throw ExceptionUtil.unwrapThrowable(t);
@@ -92,7 +93,7 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
   private MapperMethodInvoker cachedInvoker(Method method) throws Throwable {
     try {
       return MapUtil.computeIfAbsent(methodCache, method, m -> {
-        if (!m.isDefault()) {
+        if (!m.isDefault()) {//不是default方法
           return new PlainMethodInvoker(new MapperMethod(mapperInterface, method, sqlSession.getConfiguration()));
         }
         try {

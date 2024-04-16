@@ -23,19 +23,20 @@ import org.apache.ibatis.session.Configuration;
 
 /**
  * @author Clinton Begin
+ * foreach 标签的SqlNode
  */
 public class ForEachSqlNode implements SqlNode {
   public static final String ITEM_PREFIX = "__frch_";
 
   private final ExpressionEvaluator evaluator;
-  private final String collectionExpression;
-  private final Boolean nullable;
+  private final String collectionExpression;// 集合表达式
+  private final Boolean nullable;// 是否允许为空
   private final SqlNode contents;
-  private final String open;
-  private final String close;
-  private final String separator;
-  private final String item;
-  private final String index;
+  private final String open;// 开始符号
+  private final String close;// 结束符号
+  private final String separator;// 分隔符
+  private final String item;// 迭代变量名
+  private final String index;// 索引
   private final Configuration configuration;
 
   /**
@@ -69,30 +70,30 @@ public class ForEachSqlNode implements SqlNode {
   public boolean apply(DynamicContext context) {
     Map<String, Object> bindings = context.getBindings();
     final Iterable<?> iterable = evaluator.evaluateIterable(collectionExpression, bindings,
-        Optional.ofNullable(nullable).orElseGet(configuration::isNullableOnForEach));
+        Optional.ofNullable(nullable).orElseGet(configuration::isNullableOnForEach));//获取集合表达式迭代器
     if (iterable == null || !iterable.iterator().hasNext()) {
       return true;
     }
     boolean first = true;
-    applyOpen(context);
+    applyOpen(context);//添加开始符号
     int i = 0;
-    for (Object o : iterable) {
+    for (Object o : iterable) {//迭代集合
       DynamicContext oldContext = context;
-      if (first || separator == null) {
+      if (first || separator == null) {//第一个元素或没有分隔符
         context = new PrefixedContext(context, "");
-      } else {
+      } else {//有分隔符
         context = new PrefixedContext(context, separator);
       }
       int uniqueNumber = context.getUniqueNumber();
       // Issue #709
-      if (o instanceof Map.Entry) {
+      if (o instanceof Map.Entry) {//如果元素是map的entry
         @SuppressWarnings("unchecked")
         Map.Entry<Object, Object> mapEntry = (Map.Entry<Object, Object>) o;
-        applyIndex(context, mapEntry.getKey(), uniqueNumber);
-        applyItem(context, mapEntry.getValue(), uniqueNumber);
+        applyIndex(context, mapEntry.getKey(), uniqueNumber);//index为key
+        applyItem(context, mapEntry.getValue(), uniqueNumber);//item为value
       } else {
-        applyIndex(context, i, uniqueNumber);
-        applyItem(context, o, uniqueNumber);
+        applyIndex(context, i, uniqueNumber);//index为i
+        applyItem(context, o, uniqueNumber);//item为o
       }
       contents.apply(new FilteredDynamicContext(configuration, context, index, item, uniqueNumber));
       if (first) {
@@ -101,7 +102,7 @@ public class ForEachSqlNode implements SqlNode {
       context = oldContext;
       i++;
     }
-    applyClose(context);
+    applyClose(context);//添加结束符号
     context.getBindings().remove(item);
     context.getBindings().remove(index);
     return true;

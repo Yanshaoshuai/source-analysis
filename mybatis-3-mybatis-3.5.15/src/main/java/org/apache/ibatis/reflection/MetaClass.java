@@ -28,6 +28,8 @@ import org.apache.ibatis.reflection.property.PropertyTokenizer;
 
 /**
  * @author Clinton Begin
+ *
+ * 获取对象的属性值和get/set方法  支持嵌套
  */
 public class MetaClass {
 

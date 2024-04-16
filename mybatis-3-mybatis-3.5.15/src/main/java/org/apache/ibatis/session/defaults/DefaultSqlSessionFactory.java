@@ -44,6 +44,7 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
 
   @Override
   public SqlSession openSession() {
+    //configuration.getDefaultExecutorType() 是ExecutorType.SIMPLE
     return openSessionFromDataSource(configuration.getDefaultExecutorType(), null, false);
   }
 

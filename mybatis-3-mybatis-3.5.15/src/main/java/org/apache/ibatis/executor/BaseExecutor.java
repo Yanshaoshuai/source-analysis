@@ -54,6 +54,7 @@ public abstract class BaseExecutor implements Executor {
   protected Transaction transaction;
   protected Executor wrapper;
 
+  //延迟加载列表
   protected ConcurrentLinkedQueue<DeferredLoad> deferredLoads;
   protected PerpetualCache localCache;//一级缓存
   protected PerpetualCache localOutputParameterCache;
@@ -160,7 +161,7 @@ public abstract class BaseExecutor implements Executor {
     } finally {
       queryStack--;
     }
-    if (queryStack == 0) {
+    if (queryStack == 0) {//主查询完毕 加载延迟加载列表的结果
       for (DeferredLoad deferredLoad : deferredLoads) {
         deferredLoad.load();
       }
@@ -187,9 +188,9 @@ public abstract class BaseExecutor implements Executor {
       throw new ExecutorException("Executor was closed.");
     }
     DeferredLoad deferredLoad = new DeferredLoad(resultObject, property, key, localCache, configuration, targetType);
-    if (deferredLoad.canLoad()) {
+    if (deferredLoad.canLoad()) {//如果可以加载 立即加载
       deferredLoad.load();
-    } else {
+    } else {//添加到延迟加载列表
       deferredLoads.add(new DeferredLoad(resultObject, property, key, localCache, configuration, targetType));
     }
   }
@@ -331,13 +332,13 @@ public abstract class BaseExecutor implements Executor {
   private <E> List<E> queryFromDatabase(MappedStatement ms, Object parameter, RowBounds rowBounds,
       ResultHandler resultHandler, CacheKey key, BoundSql boundSql) throws SQLException {
     List<E> list;
-    localCache.putObject(key, EXECUTION_PLACEHOLDER);
+    localCache.putObject(key, EXECUTION_PLACEHOLDER);//填充占位符
     try {
       list = doQuery(ms, parameter, rowBounds, resultHandler, boundSql);
     } finally {
       localCache.removeObject(key);
     }
-    localCache.putObject(key, list);
+    localCache.putObject(key, list);//替换占位符
     if (ms.getStatementType() == StatementType.CALLABLE) {
       localOutputParameterCache.putObject(key, parameter);
     }
@@ -379,7 +380,7 @@ public abstract class BaseExecutor implements Executor {
       this.targetType = targetType;
     }
 
-    public boolean canLoad() {
+    public boolean canLoad() {//如果不是占位符 并且 缓存中有数据 则可以加载
       return localCache.getObject(key) != null && localCache.getObject(key) != EXECUTION_PLACEHOLDER;
     }
 

@@ -50,6 +50,8 @@ import org.apache.ibatis.util.MapUtil;
  * names and getter/setter methods.
  *
  * @author Clinton Begin
+ *
+ * 获取对象的属性值和get/set方法  不支持嵌套
  */
 public class Reflector {
 

@@ -40,6 +40,9 @@ public class SqlSourceBuilder extends BaseBuilder {
     super(configuration);
   }
 
+  /**
+   * 转换成 StaticSqlSource
+   */
   public SqlSource parse(String originalSql, Class<?> parameterType, Map<String, Object> additionalParameters) {
     ParameterMappingTokenHandler handler = new ParameterMappingTokenHandler(configuration, parameterType,
         additionalParameters);
@@ -71,7 +74,7 @@ public class SqlSourceBuilder extends BaseBuilder {
 
     private final List<ParameterMapping> parameterMappings = new ArrayList<>();
     private final Class<?> parameterType;
-    private final MetaObject metaParameters;
+    private final MetaObject metaParameters;//反射对象
 
     public ParameterMappingTokenHandler(Configuration configuration, Class<?> parameterType,
         Map<String, Object> additionalParameters) {
@@ -84,6 +87,9 @@ public class SqlSourceBuilder extends BaseBuilder {
       return parameterMappings;
     }
 
+    /**
+     * 处理参数映射 并且替换#{xxx}为?
+     */
     @Override
     public String handleToken(String content) {
       parameterMappings.add(buildParameterMapping(content));
@@ -95,7 +101,7 @@ public class SqlSourceBuilder extends BaseBuilder {
       String property = propertiesMap.get("property");
       Class<?> propertyType;
       if (metaParameters.hasGetter(property)) { // issue #448 get type from additional params
-        propertyType = metaParameters.getGetterType(property);
+        propertyType = metaParameters.getGetterType(property);//获取属性值
       } else if (typeHandlerRegistry.hasTypeHandler(parameterType)) {
         propertyType = parameterType;
       } else if (JdbcType.CURSOR.name().equals(propertiesMap.get("jdbcType"))) {
@@ -146,6 +152,9 @@ public class SqlSourceBuilder extends BaseBuilder {
       return builder.build();
     }
 
+    /**
+     * 构建参数映射表达式
+     */
     private Map<String, String> parseParameterMapping(String content) {
       try {
         return new ParameterExpression(content);

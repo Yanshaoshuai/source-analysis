@@ -29,6 +29,12 @@ import org.apache.ibatis.reflection.wrapper.ObjectWrapperFactory;
 
 /**
  * @author Clinton Begin
+ *
+ * 反射工具类
+ * MetaObject封装了对对象的操作
+ * 1.直接操作属性/嵌套属性/集合属性  user.name user.address.street user.phoneNumbers[0] user.accountMap[account] ...
+ * 2.自动创建子属性对象(集合不能自动创建)
+ * 3.查找属性名 支持下划线转驼峰
  */
 public class MetaObject {
 
@@ -113,8 +119,10 @@ public class MetaObject {
   public Object getValue(String name) {
     PropertyTokenizer prop = new PropertyTokenizer(name);
     if (!prop.hasNext()) {
+      //没有子属性 直接通过ObjectWrapper获取属性值
       return objectWrapper.get(prop);
     }
+    //有子属性 先获取子属性的MetaObject 再通过子属性MetaObject获取属性值
     MetaObject metaValue = metaObjectForProperty(prop.getIndexedName());
     if (metaValue == SystemMetaObject.NULL_META_OBJECT) {
       return null;

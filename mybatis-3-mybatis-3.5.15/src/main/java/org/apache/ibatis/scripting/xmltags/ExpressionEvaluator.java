@@ -25,9 +25,13 @@ import org.apache.ibatis.builder.BuilderException;
 
 /**
  * @author Clinton Begin
+ * ognl表达式解析器
  */
 public class ExpressionEvaluator {
 
+  /**
+   * 计算条件表达式的值
+   */
   public boolean evaluateBoolean(String expression, Object parameterObject) {
     Object value = OgnlCache.getValue(expression, parameterObject);
     if (value instanceof Boolean) {
@@ -49,6 +53,7 @@ public class ExpressionEvaluator {
 
   /**
    * @since 3.5.9
+   * 获取集合或数组的迭代器
    */
   public Iterable<?> evaluateIterable(String expression, Object parameterObject, boolean nullable) {
     Object value = OgnlCache.getValue(expression, parameterObject);

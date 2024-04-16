@@ -94,7 +94,7 @@ public class XMLConfigBuilder extends BaseBuilder {
 
   private XMLConfigBuilder(Class<? extends Configuration> configClass, XPathParser parser, String environment,
       Properties props) {
-    super(newConfig(configClass));
+    super(newConfig(configClass));//把创建好的Configuration对象传给父类构造函数
     ErrorContext.instance().resource("SQL Mapper Configuration");
     this.configuration.setVariables(props);
     this.parsed = false;
@@ -128,7 +128,7 @@ public class XMLConfigBuilder extends BaseBuilder {
       environmentsElement(root.evalNode("environments"));
       databaseIdProviderElement(root.evalNode("databaseIdProvider"));
       typeHandlersElement(root.evalNode("typeHandlers"));
-      mappersElement(root.evalNode("mappers"));
+      mappersElement(root.evalNode("mappers"));//解析mapper文件 mappers标签
     } catch (Exception e) {
       throw new BuilderException("Error parsing SQL Mapper Configuration. Cause: " + e, e);
     }
@@ -263,7 +263,7 @@ public class XMLConfigBuilder extends BaseBuilder {
         .setAutoMappingBehavior(AutoMappingBehavior.valueOf(props.getProperty("autoMappingBehavior", "PARTIAL")));
     configuration.setAutoMappingUnknownColumnBehavior(
         AutoMappingUnknownColumnBehavior.valueOf(props.getProperty("autoMappingUnknownColumnBehavior", "NONE")));
-    configuration.setCacheEnabled(booleanValueOf(props.getProperty("cacheEnabled"), true));
+    configuration.setCacheEnabled(booleanValueOf(props.getProperty("cacheEnabled"), true));//设置是否开启二级缓存
     configuration.setProxyFactory((ProxyFactory) createInstance(props.getProperty("proxyFactory")));
     configuration.setLazyLoadingEnabled(booleanValueOf(props.getProperty("lazyLoadingEnabled"), false));
     configuration.setAggressiveLazyLoading(booleanValueOf(props.getProperty("aggressiveLazyLoading"), false));
@@ -391,10 +391,10 @@ public class XMLConfigBuilder extends BaseBuilder {
       return;
     }
     for (XNode child : context.getChildren()) {
-      if ("package".equals(child.getName())) {
+      if ("package".equals(child.getName())) {//package标签
         String mapperPackage = child.getStringAttribute("name");
         configuration.addMappers(mapperPackage);
-      } else {
+      } else {//mapper标签
         String resource = child.getStringAttribute("resource");
         String url = child.getStringAttribute("url");
         String mapperClass = child.getStringAttribute("class");
@@ -433,7 +433,7 @@ public class XMLConfigBuilder extends BaseBuilder {
     return environment.equals(id);
   }
 
-  private static Configuration newConfig(Class<? extends Configuration> configClass) {
+  private static Configuration newConfig(Class<? extends Configuration> configClass) {//创建Configuration实例
     try {
       return configClass.getDeclaredConstructor().newInstance();
     } catch (Exception ex) {

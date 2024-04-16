@@ -31,6 +31,7 @@ import org.apache.ibatis.session.Configuration;
  * @since 3.2.0
  *
  * @author Eduardo Macarron
+ * 没有动态sql(即sql结构不会因为参数而变化)的SqlSource
  */
 public class RawSqlSource implements SqlSource {
 
@@ -43,7 +44,7 @@ public class RawSqlSource implements SqlSource {
   public RawSqlSource(Configuration configuration, String sql, Class<?> parameterType) {
     SqlSourceBuilder sqlSourceParser = new SqlSourceBuilder(configuration);
     Class<?> clazz = parameterType == null ? Object.class : parameterType;
-    sqlSource = sqlSourceParser.parse(sql, clazz, new HashMap<>());
+    sqlSource = sqlSourceParser.parse(sql, clazz, new HashMap<>());//转成StaticSqlSource
   }
 
   private static String getSql(Configuration configuration, SqlNode rootSqlNode) {

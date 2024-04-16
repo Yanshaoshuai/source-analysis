@@ -24,6 +24,7 @@ import org.apache.ibatis.type.SimpleTypeRegistry;
 
 /**
  * @author Clinton Begin
+ * 包含${}的sql节点
  */
 public class TextSqlNode implements SqlNode {
   private final String text;

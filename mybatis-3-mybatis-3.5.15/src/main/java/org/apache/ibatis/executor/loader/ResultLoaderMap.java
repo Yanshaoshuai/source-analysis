@@ -215,6 +215,7 @@ public class ResultLoaderMap {
             old.parameterObject, old.targetType, old.cacheKey, old.boundSql);
       }
 
+      //设置属性
       this.metaResultObject.setValue(property, this.resultLoader.loadResult());
     }
 

@@ -97,9 +97,9 @@ public class XMLMapperBuilder extends BaseBuilder {
 
   public void parse() {
     if (!configuration.isResourceLoaded(resource)) {
-      configurationElement(parser.evalNode("/mapper"));
+      configurationElement(parser.evalNode("/mapper"));//解析mapper节点
       configuration.addLoadedResource(resource);
-      bindMapperForNamespace();
+      bindMapperForNamespace();//绑定mapper接口
     }
     parsePendingResultMaps();
     parsePendingCacheRefs();
@@ -117,12 +117,12 @@ public class XMLMapperBuilder extends BaseBuilder {
         throw new BuilderException("Mapper's namespace cannot be empty");
       }
       builderAssistant.setCurrentNamespace(namespace);
-      cacheRefElement(context.evalNode("cache-ref"));
-      cacheElement(context.evalNode("cache"));
-      parameterMapElement(context.evalNodes("/mapper/parameterMap"));
-      resultMapElements(context.evalNodes("/mapper/resultMap"));
-      sqlElement(context.evalNodes("/mapper/sql"));
-      buildStatementFromContext(context.evalNodes("select|insert|update|delete"));
+      cacheRefElement(context.evalNode("cache-ref"));//解析cache-ref节点
+      cacheElement(context.evalNode("cache"));//解析cache节点
+      parameterMapElement(context.evalNodes("/mapper/parameterMap"));//解析parameterMap节点
+      resultMapElements(context.evalNodes("/mapper/resultMap"));//解析resultMap节点
+      sqlElement(context.evalNodes("/mapper/sql"));//解析sql节点
+      buildStatementFromContext(context.evalNodes("select|insert|update|delete"));//解析select|insert|update|delete节点
     } catch (Exception e) {
       throw new BuilderException("Error parsing Mapper XML. The XML location is '" + resource + "'. Cause: " + e, e);
     }

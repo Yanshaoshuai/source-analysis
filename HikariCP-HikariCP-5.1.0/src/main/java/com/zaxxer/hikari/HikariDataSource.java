@@ -99,7 +99,7 @@ public class HikariDataSource extends HikariConfig implements DataSource, Closea
       if (fastPathPool != null) {
          return fastPathPool.getConnection();
       }
-
+      //如果使用无参构造需要走下面初始化连接池的逻辑
       // See http://en.wikipedia.org/wiki/Double-checked_locking#Usage_in_Java
       HikariPool result = pool;
       if (result == null) {

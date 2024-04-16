@@ -157,7 +157,7 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
          timeout = timeUnit.toNanos(timeout);
          do {
             final var start = currentTime();
-            final T bagEntry = handoffQueue.poll(timeout, NANOSECONDS);//从交接队列取元素
+            final T bagEntry = handoffQueue.poll(timeout, NANOSECONDS);//从交接队列取元素 成功会打破自旋
             if (bagEntry == null || bagEntry.compareAndSet(STATE_NOT_IN_USE, STATE_IN_USE)) {
                return bagEntry;
             }
@@ -186,7 +186,7 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
       bagEntry.setState(STATE_NOT_IN_USE);//设置状态为未使用
 
       for (var i = 0; waiters.get() > 0; i++) {//只要有等待者且没有返回就一直循环
-         if (bagEntry.getState() != STATE_NOT_IN_USE || handoffQueue.offer(bagEntry)) {//元素状态被修改或者往队列放入元素成功则返回
+         if (bagEntry.getState() != STATE_NOT_IN_USE || handoffQueue.offer(bagEntry)) {//元素状态被修改或者元素成功被取走则返回
             return;
          }
          else if ((i & 0xff) == 0xff) {// 如果循环了255次，把当前线程挂起一会

@@ -41,7 +41,7 @@ public final class MappedStatement {
   private StatementType statementType;
   private ResultSetType resultSetType;
   private SqlSource sqlSource;
-  private Cache cache;
+  private Cache cache;//二级缓存
   private ParameterMap parameterMap;
   private List<ResultMap> resultMaps;
   private boolean flushCacheRequired;
@@ -316,6 +316,11 @@ public final class MappedStatement {
     return resultSets;
   }
 
+  /**
+   * 解析出BoundSql
+   * @param parameterObject
+   * @return
+   */
   public BoundSql getBoundSql(Object parameterObject) {
     BoundSql boundSql = sqlSource.getBoundSql(parameterObject);
     List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();

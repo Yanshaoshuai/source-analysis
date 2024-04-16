@@ -115,10 +115,10 @@ public class MapperAnnotationBuilder {
   public void parse() {
     String resource = type.toString();
     if (!configuration.isResourceLoaded(resource)) {
-      loadXmlResource();
+      loadXmlResource();//加载xml文件
       configuration.addLoadedResource(resource);
       assistant.setCurrentNamespace(type.getName());
-      parseCache();
+      parseCache();//解析二级缓存
       parseCacheRef();
       for (Method method : type.getMethods()) {
         if (!canHaveStatement(method)) {
@@ -163,7 +163,7 @@ public class MapperAnnotationBuilder {
     // to prevent loading again a resource twice
     // this flag is set at XMLMapperBuilder#bindMapperForNamespace
     if (!configuration.isResourceLoaded("namespace:" + type.getName())) {
-      String xmlResource = type.getName().replace('.', '/') + ".xml";
+      String xmlResource = type.getName().replace('.', '/') + ".xml";//mapper接口名 '.'替换为'/' + ".xml"
       // #1347
       InputStream inputStream = type.getResourceAsStream("/" + xmlResource);
       if (inputStream == null) {
@@ -174,7 +174,7 @@ public class MapperAnnotationBuilder {
           // ignore, resource is not required
         }
       }
-      if (inputStream != null) {
+      if (inputStream != null) {//解析mappers.xml文件
         XMLMapperBuilder xmlParser = new XMLMapperBuilder(inputStream, assistant.getConfiguration(), xmlResource,
             configuration.getSqlFragments(), type.getName());
         xmlParser.parse();
@@ -183,13 +183,14 @@ public class MapperAnnotationBuilder {
   }
 
   private void parseCache() {
+    //获取@CacheNamespace注解
     CacheNamespace cacheDomain = type.getAnnotation(CacheNamespace.class);
     if (cacheDomain != null) {
       Integer size = cacheDomain.size() == 0 ? null : cacheDomain.size();
       Long flushInterval = cacheDomain.flushInterval() == 0 ? null : cacheDomain.flushInterval();
       Properties props = convertToProperties(cacheDomain.properties());
       assistant.useNewCache(cacheDomain.implementation(), cacheDomain.eviction(), flushInterval, size,
-          cacheDomain.readWrite(), cacheDomain.blocking(), props);
+          cacheDomain.readWrite(), cacheDomain.blocking(), props);//设置当前mapper的二级缓存
     }
   }
 

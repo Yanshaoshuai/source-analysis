@@ -129,7 +129,7 @@ public class Configuration {
   protected Integer defaultStatementTimeout;
   protected Integer defaultFetchSize;
   protected ResultSetType defaultResultSetType;
-  protected ExecutorType defaultExecutorType = ExecutorType.SIMPLE;
+  protected ExecutorType defaultExecutorType = ExecutorType.SIMPLE;//默认执行器类型 SimpleExecutor
   protected AutoMappingBehavior autoMappingBehavior = AutoMappingBehavior.PARTIAL;
   protected AutoMappingUnknownColumnBehavior autoMappingUnknownColumnBehavior = AutoMappingUnknownColumnBehavior.NONE;
 
@@ -150,7 +150,7 @@ public class Configuration {
   protected Class<?> configurationFactory;
 
   protected final MapperRegistry mapperRegistry = new MapperRegistry(this);
-  protected final InterceptorChain interceptorChain = new InterceptorChain();
+  protected final InterceptorChain interceptorChain = new InterceptorChain();//拦截器链
   protected final TypeHandlerRegistry typeHandlerRegistry = new TypeHandlerRegistry(this);
   protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
   protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
@@ -730,6 +730,7 @@ public class Configuration {
     } else {
       executor = new SimpleExecutor(this, transaction);
     }
+    //如果启用一级缓存，则将Executor包装成CachingExecutor
     if (cacheEnabled) {
       executor = new CachingExecutor(executor);
     }

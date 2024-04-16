@@ -78,7 +78,7 @@ public class ResultLoader {
     if (Thread.currentThread().getId() != this.creatorThreadId || localExecutor.isClosed()) {
       localExecutor = newExecutor();
     }
-    try {
+    try {//执行查询
       return localExecutor.query(mappedStatement, parameterObject, RowBounds.DEFAULT, Executor.NO_RESULT_HANDLER,
           cacheKey, boundSql);
     } finally {

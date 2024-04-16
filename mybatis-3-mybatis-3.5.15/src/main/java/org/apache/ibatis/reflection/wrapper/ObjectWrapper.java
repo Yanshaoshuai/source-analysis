@@ -23,6 +23,8 @@ import org.apache.ibatis.reflection.property.PropertyTokenizer;
 
 /**
  * @author Clinton Begin
+ *
+ * 封装了对对象的操作 只能对当前对象的属性进行操作
  */
 public interface ObjectWrapper {
 

@@ -46,8 +46,8 @@ import org.apache.ibatis.session.SqlSession;
  */
 public class MapperMethod {
 
-  private final SqlCommand command;
-  private final MethodSignature method;
+  private final SqlCommand command;//SQL命令
+  private final MethodSignature method;//方法签名
 
   public MapperMethod(Class<?> mapperInterface, Method method, Configuration config) {
     this.command = new SqlCommand(config, mapperInterface, method);

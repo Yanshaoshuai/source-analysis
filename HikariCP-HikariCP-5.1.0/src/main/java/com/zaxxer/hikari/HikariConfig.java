@@ -120,7 +120,7 @@ public class HikariConfig implements HikariConfigMXBean
 
    private long keepaliveTime;
 
-   private volatile boolean sealed;
+   private volatile boolean sealed;//true表示已经完成初始化
 
    /**
     * Default constructor

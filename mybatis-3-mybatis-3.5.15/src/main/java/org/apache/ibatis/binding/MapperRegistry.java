@@ -42,11 +42,13 @@ public class MapperRegistry {
 
   @SuppressWarnings("unchecked")
   public <T> T getMapper(Class<T> type, SqlSession sqlSession) {
+    //根据mapper类型获取对应的MapperProxyFactory
     final MapperProxyFactory<T> mapperProxyFactory = (MapperProxyFactory<T>) knownMappers.get(type);
     if (mapperProxyFactory == null) {
       throw new BindingException("Type " + type + " is not known to the MapperRegistry.");
     }
     try {
+      //创建Mapper代理实例
       return mapperProxyFactory.newInstance(sqlSession);
     } catch (Exception e) {
       throw new BindingException("Error getting mapper instance. Cause: " + e, e);
@@ -59,7 +61,7 @@ public class MapperRegistry {
 
   public <T> void addMapper(Class<T> type) {
     if (type.isInterface()) {
-      if (hasMapper(type)) {
+      if (hasMapper(type)) {//bean工厂中已经存在该接口的mapper 会抛出异常
         throw new BindingException("Type " + type + " is already known to the MapperRegistry.");
       }
       boolean loadCompleted = false;
@@ -69,7 +71,7 @@ public class MapperRegistry {
         // otherwise the binding may automatically be attempted by the
         // mapper parser. If the type is already known, it won't try.
         MapperAnnotationBuilder parser = new MapperAnnotationBuilder(config, type);
-        parser.parse();
+        parser.parse();//解析资源文件，并注册到configuration中
         loadCompleted = true;
       } finally {
         if (!loadCompleted) {
@@ -100,7 +102,7 @@ public class MapperRegistry {
    *
    * @since 3.2.2
    */
-  public void addMappers(String packageName, Class<?> superType) {
+  public void addMappers(String packageName, Class<?> superType) {//解析包下所有的mapper接口
     ResolverUtil<Class<?>> resolverUtil = new ResolverUtil<>();
     resolverUtil.find(new ResolverUtil.IsA(superType), packageName);
     Set<Class<? extends Class<?>>> mapperSet = resolverUtil.getClasses();

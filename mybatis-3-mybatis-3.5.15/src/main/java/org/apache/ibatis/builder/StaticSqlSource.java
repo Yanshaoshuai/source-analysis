@@ -24,6 +24,8 @@ import org.apache.ibatis.session.Configuration;
 
 /**
  * @author Clinton Begin
+ * DynamicSqlSource和RawSqlSource都需要编译成StaticSqlSource
+ * StaticSqlSource代表已经编译好的SQL，用于获取BoundSql
  */
 public class StaticSqlSource implements SqlSource {
 
